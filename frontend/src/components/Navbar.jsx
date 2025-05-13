@@ -19,7 +19,12 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    const credentialId = localStorage.getItem("credentialId");
     localStorage.clear();
+    if (credentialId) {
+      localStorage.setItem("credentialId", credentialId);
+    }
+
     navigate("/login");
   };
 
