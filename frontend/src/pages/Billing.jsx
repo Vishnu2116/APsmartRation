@@ -112,8 +112,14 @@ export default function Billing() {
         challenge: new Uint8Array(32),
         timeout: 60000,
         userVerification: "required",
+        // ✅ Avoid QR code popup by specifying platform only
+        authenticatorSelection: {
+          authenticatorAttachment: "platform", // Use system sensor only
+        },
       };
+
       await navigator.credentials.get({ publicKey });
+
       navigate("/receipt?status=paid");
     } catch (err) {
       console.error("Authentication failed:", err);
