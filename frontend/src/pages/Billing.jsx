@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const products = [
   {
@@ -108,18 +108,26 @@ export default function Billing() {
 
   const handleBiometricAuth = async () => {
     try {
+      const credentialId = localStorage.getItem("credentialId");
+      if (!credentialId) {
+        alert("Please register your fingerprint first.");
+        return;
+      }
+
       const publicKey = {
         challenge: new Uint8Array(32),
         timeout: 60000,
         userVerification: "required",
-        // ✅ Avoid QR code popup by specifying platform only
-        authenticatorSelection: {
-          authenticatorAttachment: "platform", // Use system sensor only
-        },
+        allowCredentials: [
+          {
+            id: Uint8Array.from(atob(credentialId), (c) => c.charCodeAt(0)),
+            type: "public-key",
+            transports: ["internal"],
+          },
+        ],
       };
 
       await navigator.credentials.get({ publicKey });
-
       navigate("/receipt?status=paid");
     } catch (err) {
       console.error("Authentication failed:", err);
@@ -132,9 +140,38 @@ export default function Billing() {
     }
   };
 
+  const register = async () => {
+    try {
+      const publicKey = {
+        challenge: new Uint8Array(32),
+        rp: { name: "Smart Grocer" },
+        user: {
+          id: new Uint8Array(16),
+          name: "user@example.com",
+          displayName: "User",
+        },
+        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          userVerification: "required",
+        },
+        timeout: 60000,
+        attestation: "none",
+      };
+
+      const credential = await navigator.credentials.create({ publicKey });
+      const rawId = btoa(
+        String.fromCharCode(...new Uint8Array(credential.rawId))
+      );
+      localStorage.setItem("credentialId", rawId);
+      alert("Fingerprint registered successfully. You can now authenticate.");
+    } catch (e) {
+      alert("Fingerprint registration failed: " + e.message);
+    }
+  };
+
   return (
     <div style={{ padding: "30px" }}>
-      {/* Back Button */}
       <button
         onClick={() => navigate("/products")}
         style={{
@@ -242,60 +279,49 @@ export default function Billing() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: "white",
               padding: "30px",
-              borderRadius: "12px",
-              width: "400px",
-              textAlign: "left",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
-              border: "1px solid #e0e0e0",
+              borderRadius: "10px",
+              width: "380px",
+              textAlign: "center",
             }}
           >
-            <h3
+            <h3>Pay Using Biometric Authentication</h3>
+            <p style={{ margin: "15px 0", color: "#555" }}>
+              Please register your fingerprint if you haven't already.
+              <br />
+              Then use it to authorize the payment.
+            </p>
+            <button
+              onClick={handleBiometricAuth}
               style={{
-                marginBottom: "20px",
-                fontSize: "22px",
-                borderBottom: "1px solid #eee",
-                paddingBottom: "10px",
-                textAlign: "center",
+                marginTop: "20px",
+                padding: "12px 24px",
+                backgroundColor: "#2c3e50",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "bold",
               }}
             >
-              🔐 Pay Using Biometric Authentication
-            </h3>
-
-            <ul
+              Pay with Biometric →
+            </button>
+            <br />
+            <button
+              onClick={register}
               style={{
-                color: "#444",
-                lineHeight: "1.8",
-                fontSize: "14px",
-                marginBottom: "20px",
-                paddingLeft: "20px",
+                marginTop: "12px",
+                padding: "10px 20px",
+                backgroundColor: "#bbb",
+                color: "black",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
               }}
             >
-              <li>Ensure your fingerprint is registered on this device.</li>
-              <li>
-                Click the button below and place your finger on the sensor when
-                prompted.
-              </li>
-            </ul>
-
-            <div style={{ textAlign: "center" }}>
-              <button
-                onClick={handleBiometricAuth}
-                style={{
-                  padding: "12px 24px",
-                  background: "linear-gradient(to right, #a8e063, #56ab2f)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "15px",
-                }}
-              >
-                Pay with Biometric →
-              </button>
-            </div>
+              Register Fingerprint
+            </button>
           </div>
         </div>
       )}
