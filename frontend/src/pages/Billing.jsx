@@ -308,20 +308,22 @@ export default function Billing() {
               Pay with Biometric →
             </button>
             <br />
-            <button
-              onClick={register}
-              style={{
-                marginTop: "12px",
-                padding: "10px 20px",
-                backgroundColor: "#bbb",
-                color: "black",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              Register Fingerprint
-            </button>
+            {!localStorage.getItem("credentialId") && (
+              <button
+                onClick={register}
+                style={{
+                  marginTop: "12px",
+                  padding: "10px 20px",
+                  backgroundColor: "#bbb",
+                  color: "black",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                Register Fingerprint
+              </button>
+            )}
           </div>
         </div>
       )}
